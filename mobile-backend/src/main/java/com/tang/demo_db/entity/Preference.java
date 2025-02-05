@@ -2,9 +2,15 @@ package com.tang.demo_db.entity;
 
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "preference")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Preference {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
