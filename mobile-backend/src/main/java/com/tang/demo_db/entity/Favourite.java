@@ -24,4 +24,5 @@ public class Favourite {
     private Restaurant restaurant;
 
     // Getters and Setters
+
 }
