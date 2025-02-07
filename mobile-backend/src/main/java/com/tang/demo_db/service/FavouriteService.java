@@ -1,28 +1,34 @@
 package com.tang.demo_db.service;
 
+import com.tang.demo_db.dao.FavouriteDAO;
 import com.tang.demo_db.entity.Favourite;
-import com.tang.demo_db.entity.User;
-import com.tang.demo_db.repository.FavouriteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @Service
 public class FavouriteService {
 
     @Autowired
-    private FavouriteRepository favouriteRepository;
+    private FavouriteDAO favouriteDAO;
 
-    public List<Favourite> getUserFavourites(User user) {
-        return favouriteRepository.findByUser(user);
+    public List<Favourite> getAllFavourites() {
+        return favouriteDAO.findAllFavourites();
     }
 
-    public void addFavourite(Favourite favourite) {
-        favouriteRepository.save(favourite);
+    public Favourite getFavouriteById(Long id) {
+        return favouriteDAO.findFavouriteById(id);
     }
 
-    public void removeFavourite(User user, Long restaurantId) {
-        favouriteRepository.deleteByUserAndRestaurantId(user, restaurantId);
+    public void createFavourite(Favourite favourite) {
+        favouriteDAO.saveFavourite(favourite);
+    }
+
+    public void updateFavourite(Favourite favourite) {
+        favouriteDAO.updateFavourite(favourite);
+    }
+
+    public void deleteFavourite(Long id) {
+        favouriteDAO.deleteFavourite(id);
     }
 }
