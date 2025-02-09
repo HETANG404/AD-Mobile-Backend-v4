@@ -2,6 +2,7 @@ package com.tang.demo_db.controller;
 
 import com.tang.demo_db.entity.Restaurant;
 import com.tang.demo_db.service.RestaurantService;
+import com.tang.demo_db.service.RestaurantServiceHZY;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,7 +13,7 @@ import java.util.List;
 public class RestaurantController {
 
     @Autowired
-    private RestaurantService restaurantService;
+    private RestaurantServiceHZY restaurantService;
 
     @GetMapping
     public List<Restaurant> getAllRestaurants() {
