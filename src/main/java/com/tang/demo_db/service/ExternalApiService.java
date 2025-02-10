@@ -6,6 +6,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Service
 public class ExternalApiService {
@@ -22,12 +25,12 @@ public class ExternalApiService {
     }
 
     public ResponseEntity<String> getRecommendations(String userQuery) {
-        String encodedQuery = UriComponentsBuilder
+        String encodedQuery = URLEncoder.encode(userQuery, StandardCharsets.UTF_8);
+        UriComponentsBuilder builder = UriComponentsBuilder
                 .fromHttpUrl(foodRecommenderApiUrl)
-                .queryParam("query", userQuery)
-                .build()
-                .toUriString();
+                .queryParam("query", encodedQuery);
 
-        return restTemplate.getForEntity(encodedQuery, String.class);
+        URI uri = builder.build().toUri();
+        return restTemplate.getForEntity(uri, String.class);
     }
 }
