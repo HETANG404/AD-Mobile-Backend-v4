@@ -19,7 +19,7 @@ import java.util.Random;
 import java.util.regex.Pattern;
 
 @Service
-public class UserService {
+public class UserServiceZX {
 
     @Autowired
     private UserRepository userRepository;
