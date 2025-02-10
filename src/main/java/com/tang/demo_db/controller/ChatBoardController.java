@@ -22,7 +22,7 @@ public class ChatBoardController {
     }
 
     @PostMapping("/index")
-    public ResponseEntity<?> processQuery(@RequestParam String userQuery) {
+    public ResponseEntity<?> processQuery(@RequestBody String userQuery) {
         try {
             // Call external API
             ResponseEntity<String> apiResponse = externalApiService.getRecommendations(userQuery);
