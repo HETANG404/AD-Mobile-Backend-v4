@@ -12,10 +12,9 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpSession;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/favourites")
+@RequestMapping("/api/favourites")
 public class FavouriteController {
 
     @Autowired
@@ -24,97 +23,54 @@ public class FavouriteController {
     @Autowired
     private RestaurantRepository restaurantRepository;
 
-    @PostMapping
-    public ResponseEntity<?> createFavourite(@RequestBody FavoriteRequest request, HttpSession session) {
+    @GetMapping("/user")
+    public ResponseEntity<List<Restaurant>> getUserFavourites(HttpSession session) {
+        // Get the logged-in user from the session
+        User loggedInUser = (User) session.getAttribute("user");
+
+        if (loggedInUser == null) {
+            throw new RuntimeException("User not logged in");
+        }
+
+        // Fetch the user's favorite restaurants through the FavouriteService
+        List<Restaurant> favouriteRestaurants = favouriteService.getFavouritesByUser(loggedInUser);
+        return ResponseEntity.ok(favouriteRestaurants);
+    }
+
+    @PostMapping("/add")
+    public ResponseEntity<String> addRestaurantToFavorites(@RequestParam Long restaurantId, HttpSession session) {
+        User loggedInUser = (User) session.getAttribute("user");
+        if (loggedInUser == null) {
+            throw new RuntimeException("User not logged in");
+        }
+
         try {
-            // Check user authentication
-            User user = (User) session.getAttribute("user");
-            if (user == null) {
-                return ResponseEntity.status(401).body("User not authenticated");
-            }
-
-            // Find or create restaurant
-            Restaurant restaurant = restaurantRepository.findByPlaceId(request.getPlaceId())
-                    .orElseGet(() -> {
-                        Restaurant newRestaurant = new Restaurant();
-                        newRestaurant.setPlaceId(request.getPlaceId());
-                        return restaurantRepository.save(newRestaurant);
-                    });
-
-            // Create favourite
-            Favourite favourite = new Favourite();
-            favourite.setUser(user);
-            favourite.setRestaurant(restaurant);
-            favouriteService.createFavourite(favourite);
-
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(500)
-                    .body("Error creating favourite: " + e.getMessage());
+            favouriteService.addFavourite(loggedInUser, restaurantId);
+            return ResponseEntity.ok("Restaurant added to favorites successfully!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    @GetMapping
-    public ResponseEntity<?> getAllFavourites(HttpSession session) {
-        try {
-            // Check user authentication
-            User user = (User) session.getAttribute("user");
-            if (user == null) {
-                return ResponseEntity.status(401).body("User not authenticated");
-            }
-
-            // Get favorites and extract place IDs
-            List<String> placeIds = favouriteService.getAllFavourites().stream()
-                    .map(favourite -> favourite.getRestaurant().getPlaceId())
-                    .collect(Collectors.toList());
-
-            return ResponseEntity.ok(placeIds);
-        } catch (Exception e) {
-            return ResponseEntity.status(500)
-                    .body("Error fetching favourites: " + e.getMessage());
+    @GetMapping("/isFavorite")
+    public ResponseEntity<Boolean> isRestaurantFavorite(@RequestParam Long restaurantId, HttpSession session) {
+        User loggedInUser = (User) session.getAttribute("user");
+        if (loggedInUser == null) {
+            throw new RuntimeException("User not logged in");
         }
+
+        boolean isFavorite = favouriteService.isRestaurantFavorite(loggedInUser, restaurantId);
+        return ResponseEntity.ok(isFavorite);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteFavourite(@PathVariable Long id, HttpSession session) {
-        try {
-            // Check user authentication
-            User user = (User) session.getAttribute("user");
-            if (user == null) {
-                return ResponseEntity.status(401).body("User not authenticated");
-            }
-
-            favouriteService.deleteFavourite(id);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(500)
-                    .body("Error deleting favourite: " + e.getMessage());
+    @DeleteMapping("/removeFavorite")
+    public ResponseEntity<String> removeFavorite(@RequestParam Long restaurantId, HttpSession session) {
+        User loggedInUser = (User) session.getAttribute("user");
+        if (loggedInUser == null) {
+            throw new RuntimeException("User not logged in");
         }
-    }
 
-    @DeleteMapping("/byPlaceId/{placeId}")
-    public ResponseEntity<?> deleteFavouriteByPlaceId(@PathVariable String placeId, HttpSession session) {
-        try {
-            // Check user authentication
-            User user = (User) session.getAttribute("user");
-            if (user == null) {
-                return ResponseEntity.status(401).body("User not authenticated");
-            }
-
-            // Find restaurant by placeId
-            Restaurant restaurant = restaurantRepository.findByPlaceId(placeId)
-                    .orElse(null);
-
-            if (restaurant == null) {
-                return ResponseEntity.notFound().build();
-            }
-
-            // Delete favorite for this user and restaurant
-            favouriteService.deleteFavouriteByUserAndRestaurant(user, restaurant);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(500)
-                    .body("Error deleting favourite: " + e.getMessage());
-        }
+        favouriteService.removeFavourite(loggedInUser, restaurantId);
+        return ResponseEntity.ok("Restaurant removed from favorites");
     }
 }

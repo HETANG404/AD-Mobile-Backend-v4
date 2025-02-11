@@ -12,4 +12,6 @@ import java.util.List;
 public interface FavouriteRepository extends JpaRepository<Favourite, Long> {
     List<Favourite> findByUser(User user);
     void deleteByUserAndRestaurant(User user, Restaurant restaurant);
+
+    Favourite findByUserAndRestaurantId(User user, Long restaurantId);
 }
