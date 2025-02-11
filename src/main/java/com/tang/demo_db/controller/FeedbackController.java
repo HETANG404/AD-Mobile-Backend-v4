@@ -1,5 +1,6 @@
 package com.tang.demo_db.controller;
 
+import com.tang.demo_db.dto.FeedbackDTO;
 import com.tang.demo_db.entity.Feedback;
 import com.tang.demo_db.entity.User;
 import com.tang.demo_db.service.FeedbackService;
@@ -19,7 +20,7 @@ public class FeedbackController {
     private FeedbackService feedbackService;
 
     @PostMapping
-    public ResponseEntity<?> createFeedback(@RequestBody String feedbackText, HttpSession session) {
+    public ResponseEntity<?> createFeedback(@RequestBody FeedbackDTO feedbackDTO, HttpSession session) {
         try {
             // Check user authentication
             User user = (User) session.getAttribute("user");
@@ -30,7 +31,7 @@ public class FeedbackController {
             // Create feedback entity
             Feedback feedback = new Feedback();
             feedback.setUser(user);
-            feedback.setContext(feedbackText);
+            feedback.setContext(feedbackDTO.getContext());  // Get the context from DTO
             feedback.setTime(LocalDateTime.now());
 
             // Save feedback

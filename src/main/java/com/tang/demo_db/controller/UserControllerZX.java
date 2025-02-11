@@ -5,6 +5,7 @@ import com.tang.demo_db.dto.LoginRequest;
 import com.tang.demo_db.dto.RegisterRequestDTO;
 import com.tang.demo_db.entity.User;
 import com.tang.demo_db.entity.UserSession;
+import com.tang.demo_db.repository.UserRepository;
 import com.tang.demo_db.repository.UserSessionRepository;
 import com.tang.demo_db.service.UserService;
 import com.tang.demo_db.service.UserServiceZX;
@@ -18,7 +19,9 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.regex.Pattern;
 
@@ -31,6 +34,9 @@ public class UserControllerZX {
 
     @Autowired
     private UserSessionRepository userSessionRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     /**
      * 用户登录
@@ -47,6 +53,7 @@ public class UserControllerZX {
 
         if (user != null) {
             session.setAttribute("user", user); // 记录用户 Session
+            session.setAttribute("userid", user.getId());
             return ResponseEntity.status(HttpStatus.OK).body("Login successful");
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
@@ -182,17 +189,23 @@ public class UserControllerZX {
      * 重置密码
      */
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(HttpSession session) {
-        // 1. 从 Session 获取当前用户
-        User loggedInUser = (User) session.getAttribute("user");
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        // 1. 从请求体中获取用户的 email
+        String email = request.get("email");
 
-        // 2. 确保用户已登录
-        if (loggedInUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User is not logged in");
+        // 2. 确保用户提供了 email
+        if (email == null || email.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email is required");
         }
 
-        // 3. 调用服务层方法重置密码
-        boolean isReset = userService.resetPassword(loggedInUser);
+        // 3. 从数据库中找到用户
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found with the provided email");
+        }
+
+        // 4. 调用服务层方法重置密码
+        boolean isReset = userService.resetPassword(user);
         if (isReset) {
             return ResponseEntity.ok("Password reset successfully. Check your email for the new password.");
         } else {
@@ -200,5 +213,22 @@ public class UserControllerZX {
         }
     }
 
+    @GetMapping("/info")
+    public ResponseEntity<?> getUserInfo(HttpSession session) {
+        // Get the current user from session
+        User user = (User) session.getAttribute("user");
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+        }
+
+        // Create response with required user info
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("username", user.getUsername());
+        userInfo.put("email", user.getEmail());
+        userInfo.put("age", user.getAge());
+
+        return ResponseEntity.ok(userInfo);
+    }
 
 }
